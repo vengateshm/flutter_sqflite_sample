@@ -4,11 +4,16 @@ import 'package:expense_controller/screens/expense_add_screen.dart';
 import 'package:expense_controller/utils/utils.dart';
 import 'package:expense_controller/widgets/venm_app_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:expense_controller/utils/constants.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:expense_controller/utils/utils.dart';
 
 class ExpenseList extends StatefulWidget {
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
   final ExpenseRepository repository;
 
-  ExpenseList(this.repository);
+  ExpenseList(this.flutterLocalNotificationsPlugin, this.repository);
 
   @override
   _ExpenseListState createState() => _ExpenseListState();
@@ -52,6 +57,14 @@ class _ExpenseListState extends State<ExpenseList> {
                   builder: (BuildContext context) =>
                       ExpenseAddScreen(widget.repository)));
           if (result != null) {
+            var showNotification = await isMonthlyExpenseLimitExceeded();
+            if (showNotification) {
+              Utils.showLocalAppNotification(
+                  widget.flutterLocalNotificationsPlugin,
+                  "Alert!",
+                  "Hello, You have exceeded the monthly expense limit. Spend wisely!",
+                  payload: '');
+            }
             widget.repository.addExpense(result.categoryId, result.description,
                 result.createdAt, result.amount);
             getAllExpenses();
@@ -96,7 +109,7 @@ class _ExpenseListState extends State<ExpenseList> {
                     fontWeight: FontWeight.w700),
               ),
               Text(
-                getCurrentMonthTotalExpenses(_expenses),
+                "Rs. ${getCurrentMonthTotalExpenses(_expenses).toString()}",
                 style: TextStyle(
                     color: Colors.white,
                     fontSize: 14.0,
@@ -161,14 +174,14 @@ class _ExpenseListState extends State<ExpenseList> {
     getAllExpenses();
   }
 
-  String getCurrentMonthTotalExpenses(List<Expense> expenses) {
+  double getCurrentMonthTotalExpenses(List<Expense> expenses) {
     var currentMonth = DateTime.now().month;
     var totalSum = 0.0;
     expenses.forEach((expense) {
       if (expense.createdAt.toMonth() == currentMonth)
         totalSum += expense.amount;
     });
-    return "Rs. ${totalSum.toString()}";
+    return totalSum;
   }
 
   Widget categoryLabelWidget(Expense expense) {
@@ -192,8 +205,7 @@ class _ExpenseListState extends State<ExpenseList> {
     }
   }
 
-  getCreatedAt(String createdAt) =>
-      DateUtils.formatDate(createdAt, "dd, MMM yyyy");
+  getCreatedAt(String createdAt) => Utils.formatDate(createdAt, "dd, MMM yyyy");
 
   onExpenseItemTapped(Expense expense) {
     showDialog(
@@ -219,5 +231,13 @@ class _ExpenseListState extends State<ExpenseList> {
                 borderRadius: BorderRadius.circular(10.0)),
           );
         });
+  }
+
+  Future<bool> isMonthlyExpenseLimitExceeded() async {
+    Future<SharedPreferences> prefs = SharedPreferences.getInstance();
+    SharedPreferences sharedPrefs = await prefs;
+    var monthlyExpenseLimit = sharedPrefs.getDouble(MONTHLY_EXPENSE_LIMIT_KEY);
+    var currentMonthTotalExpenses = getCurrentMonthTotalExpenses(expenses);
+    return currentMonthTotalExpenses > monthlyExpenseLimit;
   }
 }

@@ -2,11 +2,13 @@ import 'package:expense_controller/repository/expense_repository.dart';
 import 'package:expense_controller/screens/expense_list_screen.dart';
 import 'package:expense_controller/screens/settings_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class HomeScreen extends StatefulWidget {
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
   final ExpenseRepository repository;
 
-  HomeScreen(this.repository);
+  HomeScreen(this.flutterLocalNotificationsPlugin, this.repository);
 
   @override
   _HomeScreenState createState() => _HomeScreenState(repository);
@@ -57,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   getWidgetByPosition() {
     if (_selectedIndex == 0) {
-      return ExpenseList(repository);
+      return ExpenseList(widget.flutterLocalNotificationsPlugin,repository);
     } else {
       return SettingsScreen(repository);
     }

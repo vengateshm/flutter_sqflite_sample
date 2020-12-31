@@ -1,12 +1,33 @@
 import 'package:intl/intl.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-class DateUtils {
+import 'constants.dart';
+
+class Utils {
   static String formatDate(String date, String toFormat) {
     try {
       return DateFormat(toFormat).format(DateTime.parse(date));
     } catch (Exception) {
       return "";
     }
+  }
+
+  static void showLocalAppNotification(
+      FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin,
+      String title,
+      String body,
+      {String payload = ''}) async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+            EXP_CTRL_CHANNEL_ID, EXP_CTRL_CHANNEL_NAME, EXP_CTRL_CHANNEL_DESC,
+            importance: Importance.max,
+            priority: Priority.high,
+            showWhen: false,
+        styleInformation: BigTextStyleInformation(''));
+    const NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+    await flutterLocalNotificationsPlugin
+        .show(0, title, body, platformChannelSpecifics, payload: payload);
   }
 }
 

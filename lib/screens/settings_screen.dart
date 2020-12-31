@@ -1,8 +1,10 @@
 import 'package:expense_controller/repository/expense_repository.dart';
+import 'package:expense_controller/utils/constants.dart';
 import 'package:expense_controller/widgets/venm_app_bar.dart';
 import 'package:expense_controller/widgets/venm_settings_row_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsScreen extends StatefulWidget {
   final ExpenseRepository repository;
@@ -16,6 +18,8 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   final ExpenseRepository repository;
   TextEditingController _categoryNameController;
+  TextEditingController _monthlyExpenseLimitController;
+  Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
 
   _SettingsScreenState(this.repository);
 
@@ -23,12 +27,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _categoryNameController = TextEditingController();
+    _monthlyExpenseLimitController = TextEditingController();
   }
 
   @override
   void dispose() {
     super.dispose();
     _categoryNameController?.dispose();
+    _monthlyExpenseLimitController?.dispose();
   }
 
   @override
@@ -41,14 +47,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             settingsRowWidget('Add category', "Adds new expense category", () {
               showAddCategoryDialog(_categoryNameController, repository);
             }),
-            settingsRowWidget(
-                'Set alarm for expense category',
-                'Triggers alarm when current month expense exceeds the monthly limit of the category',
-                () => {}),
-            settingsRowWidget(
-                'Set monthly expense alarm',
-                'Triggers alarm when current month expense exceeds the monthly limit',
-                () => {}),
+            settingsRowWidget('Show notification for monthly expense limit',
+                'Shows notification when current months\' total expense exceeds the monthly limit',
+                () {
+              showMonthlyExpenseLimitDialog(
+                  _monthlyExpenseLimitController, _prefs);
+            }),
           ]),
         ),
       ),
@@ -88,6 +92,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                     child: Text(
                       'ADD CATEGORY',
+                      style: TextStyle(color: Colors.white, fontSize: 16.0),
+                    ),
+                    color: Colors.redAccent,
+                  )
+                ],
+              ),
+              elevation: 12.0,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.0)));
+        });
+  }
+
+  showMonthlyExpenseLimitDialog(
+      TextEditingController monthlyExpenseLimitController,
+      Future<SharedPreferences> prefs) {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: monthlyExpenseLimitController,
+                    keyboardType:
+                        TextInputType.numberWithOptions(decimal: true),
+                    maxLines: 1,
+                    decoration: InputDecoration(
+                        labelText: 'Monthly Amount Limit',
+                        hintMaxLines: 1,
+                        border: OutlineInputBorder(
+                            borderSide:
+                                BorderSide(color: Colors.green, width: 4.0))),
+                  ),
+                  SizedBox(
+                    height: 30.0,
+                  ),
+                  RaisedButton(
+                    onPressed: () async {
+                      if (monthlyExpenseLimitController.text.isNotEmpty) {
+                        var sharedPrefs = await prefs;
+                        sharedPrefs.setDouble(MONTHLY_EXPENSE_LIMIT_KEY,
+                            double.parse(monthlyExpenseLimitController.text));
+                        Navigator.of(context).pop();
+                      }
+                    },
+                    child: Text(
+                      'SET LIMIT',
                       style: TextStyle(color: Colors.white, fontSize: 16.0),
                     ),
                     color: Colors.redAccent,

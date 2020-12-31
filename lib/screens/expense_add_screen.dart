@@ -132,7 +132,7 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
     );
   }
 
-  addExpense() {
+  addExpense() async {
     String description = _descriptionController.text;
     String amount = _amountController.text;
     if (_selectedExpenseCategory == null) {
