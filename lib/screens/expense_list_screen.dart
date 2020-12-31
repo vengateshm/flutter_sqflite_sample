@@ -51,9 +51,11 @@ class _ExpenseListState extends State<ExpenseList> {
               MaterialPageRoute(
                   builder: (BuildContext context) =>
                       ExpenseAddScreen(widget.repository)));
-          widget.repository.addExpense(result.categoryId, result.description,
-              result.createdAt, result.amount);
-          getAllExpenses();
+          if (result != null) {
+            widget.repository.addExpense(result.categoryId, result.description,
+                result.createdAt, result.amount);
+            getAllExpenses();
+          }
         },
       ),
     ));
@@ -207,9 +209,9 @@ class _ExpenseListState extends State<ExpenseList> {
                     Navigator.of(context).pop();
                   },
                   child: Text(
-                'OK',
-                style: TextStyle(color: Colors.red),
-              ))
+                    'OK',
+                    style: TextStyle(color: Colors.red),
+                  ))
             ],
             actionsPadding: EdgeInsets.all(10.0),
             elevation: 12.0,

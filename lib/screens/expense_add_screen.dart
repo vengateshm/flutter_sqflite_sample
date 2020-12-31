@@ -1,6 +1,7 @@
 import 'package:expense_controller/models/expense.dart';
 import 'package:expense_controller/models/expense_category.dart';
 import 'package:expense_controller/repository/expense_repository.dart';
+import 'package:expense_controller/widgets/venm_app_bar.dart';
 import 'package:flutter/material.dart';
 
 class ExpenseAddScreen extends StatefulWidget {
@@ -50,7 +51,7 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
     return SafeArea(
         child: Scaffold(
             appBar: AppBar(
-              title: Text("Add Expense"),
+              title: appBarTitleWidget('Add Expense'),
             ),
             body: expenseAddWidget()));
   }
