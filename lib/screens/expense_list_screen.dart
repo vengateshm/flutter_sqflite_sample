@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:expense_controller/utils/constants.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:expense_controller/utils/utils.dart';
 
 class ExpenseList extends StatefulWidget {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
@@ -39,8 +38,7 @@ class _ExpenseListState extends State<ExpenseList> {
   @override
   Widget build(BuildContext context) {
     var _expenses = expenses;
-    return SafeArea(
-        child: Scaffold(
+    return Scaffold(
       appBar: AppBar(
         title: appBarTitleWidget('Expenses'),
       ),
@@ -71,7 +69,7 @@ class _ExpenseListState extends State<ExpenseList> {
           }
         },
       ),
-    ));
+    );
   }
 
   Widget expenseListWidget(
@@ -237,6 +235,7 @@ class _ExpenseListState extends State<ExpenseList> {
     Future<SharedPreferences> prefs = SharedPreferences.getInstance();
     SharedPreferences sharedPrefs = await prefs;
     var monthlyExpenseLimit = sharedPrefs.getDouble(MONTHLY_EXPENSE_LIMIT_KEY);
+    if (monthlyExpenseLimit == null) return false;
     var currentMonthTotalExpenses = getCurrentMonthTotalExpenses(expenses);
     return currentMonthTotalExpenses > monthlyExpenseLimit;
   }

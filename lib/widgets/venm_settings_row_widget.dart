@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 Widget settingsRowWidget(String title, String description, Function onTap) =>
     GestureDetector(
+      behavior: HitTestBehavior.translucent,
       onTap: () {
         onTap();
       },
@@ -25,7 +26,7 @@ Widget settingsRowWidget(String title, String description, Function onTap) =>
             )),
             Icon(
               Icons.arrow_forward_ios_rounded,
-              color: Colors.blueGrey,
+              color: Colors.green,
             )
           ],
         ),

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
@@ -23,7 +24,7 @@ class Utils {
             importance: Importance.max,
             priority: Priority.high,
             showWhen: false,
-        styleInformation: BigTextStyleInformation(''));
+            styleInformation: BigTextStyleInformation(''));
     const NotificationDetails platformChannelSpecifics =
         NotificationDetails(android: androidPlatformChannelSpecifics);
     await flutterLocalNotificationsPlugin
@@ -34,5 +35,13 @@ class Utils {
 extension DateConversion on String {
   int toMonth() {
     return DateFormat("yyyy-MM-dd").parse(this).month;
+  }
+}
+
+extension SnackBarExtension on BuildContext {
+  void showSnackBar(String message) {
+    Scaffold.of(this).showSnackBar(SnackBar(
+      content: Text(message),
+    ));
   }
 }
