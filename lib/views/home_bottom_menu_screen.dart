@@ -1,27 +1,21 @@
-import 'package:expense_controller/repository/expense_repository.dart';
-import 'package:expense_controller/screens/expense_list_screen.dart';
-import 'package:expense_controller/screens/settings_screen.dart';
+import 'package:expense_controller/views/expense_list_screen.dart';
+import 'package:expense_controller/views/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class HomeScreen extends StatefulWidget {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
-  final ExpenseRepository repository;
 
-  HomeScreen(this.flutterLocalNotificationsPlugin, this.repository);
+  HomeScreen(this.flutterLocalNotificationsPlugin);
 
   @override
-  _HomeScreenState createState() => _HomeScreenState(repository);
+  _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final ExpenseRepository repository;
   int _selectedIndex = 0;
 
-  _HomeScreenState(this.repository);
-
-  static const TextStyle optionStyle =
-      TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
+  _HomeScreenState();
 
   void _onItemTapped(int index) {
     setState(() {
@@ -43,11 +37,11 @@ class _HomeScreenState extends State<HomeScreen> {
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.list),
-            title: Text('Expenses'),
+            label: 'Expenses',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),
-            title: Text('Settings'),
+            label: 'Settings',
           ),
         ],
         currentIndex: _selectedIndex,
@@ -59,9 +53,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   getWidgetByPosition() {
     if (_selectedIndex == 0) {
-      return ExpenseList(widget.flutterLocalNotificationsPlugin,repository);
+      return ExpenseListScreen(widget.flutterLocalNotificationsPlugin);
     } else {
-      return SettingsScreen(repository);
+      return SettingsScreen();
     }
   }
 }

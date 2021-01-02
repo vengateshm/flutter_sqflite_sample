@@ -39,6 +39,7 @@ dev_dependencies:
   google_fonts: ^1.1.1
   flutter_local_notifications: ^3.0.2
   shared_preferences: ^0.5.12+4
+  get: ^3.24.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

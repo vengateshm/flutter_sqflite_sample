@@ -1,90 +1,68 @@
+import 'package:expense_controller/controllers/expense_list_controller.dart';
 import 'package:expense_controller/models/expense.dart';
-import 'package:expense_controller/repository/expense_repository.dart';
-import 'package:expense_controller/screens/expense_add_screen.dart';
+import 'package:expense_controller/utils/constants.dart';
 import 'package:expense_controller/utils/utils.dart';
+import 'package:expense_controller/views/expense_add_screen.dart';
 import 'package:expense_controller/widgets/venm_app_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:expense_controller/utils/constants.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class ExpenseList extends StatefulWidget {
+class ExpenseListScreen extends StatelessWidget {
+  final ExpenseScreenController _expenseController =
+      Get.find<ExpenseScreenController>();
+
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
-  final ExpenseRepository repository;
 
-  ExpenseList(this.flutterLocalNotificationsPlugin, this.repository);
-
-  @override
-  _ExpenseListState createState() => _ExpenseListState();
-}
-
-class _ExpenseListState extends State<ExpenseList> {
-  List<Expense> expenses;
-
-  @override
-  void initState() {
-    super.initState();
-    getAllExpenses();
-  }
-
-  void getAllExpenses() {
-    widget.repository.getAllExpenses().then((value) {
-      setState(() {
-        expenses = value;
-      });
-    });
-  }
+  ExpenseListScreen(this.flutterLocalNotificationsPlugin);
 
   @override
   Widget build(BuildContext context) {
-    var _expenses = expenses;
     return Scaffold(
       appBar: AppBar(
         title: appBarTitleWidget('Expenses'),
       ),
-      body: expenseListWidget(_expenses, widget.repository),
+      body: Obx(() => expenseListWidget(_expenseController.expenses)),
       floatingActionButton: FloatingActionButton(
         child: Icon(
           Icons.add,
           color: Colors.white,
         ),
         onPressed: () async {
-          var result = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (BuildContext context) =>
-                      ExpenseAddScreen(widget.repository)));
-          if (result != null) {
-            var showNotification = await isMonthlyExpenseLimitExceeded();
+          var result = await Get.to(ExpenseAddScreen());
+          if (result != null && result is Expense) {
+            var showNotification = await isMonthlyExpenseLimitExceeded(
+                _expenseController.expenses);
             if (showNotification) {
               Utils.showLocalAppNotification(
-                  widget.flutterLocalNotificationsPlugin,
+                  flutterLocalNotificationsPlugin,
                   "Alert!",
                   "Hello, You have exceeded the monthly expense limit. Spend wisely!",
                   payload: '');
             }
-            widget.repository.addExpense(result.categoryId, result.description,
-                result.createdAt, result.amount);
-            getAllExpenses();
+            var expense = Expense(result.categoryId, result.description,
+                result.createdAt, result.amount,
+                id: _expenseController.expenses.length,
+                categoryName: result.categoryName);
+            _expenseController.addExpense(expense);
           }
         },
       ),
     );
   }
 
-  Widget expenseListWidget(
-      List<Expense> _expenses, ExpenseRepository repository) {
-    if (_expenses == null) {
+  Widget expenseListWidget(List<Expense> expenses) {
+    if (expenses == null) {
       return Center(
         child: CircularProgressIndicator(),
       );
     } else {
-      if (_expenses.isEmpty) {
+      if (expenses.isEmpty) {
         return Center(
           child: Text('No Expense records found.'),
         );
       }
-
       return Column(
         children: [
           Container(
@@ -107,7 +85,7 @@ class _ExpenseListState extends State<ExpenseList> {
                     fontWeight: FontWeight.w700),
               ),
               Text(
-                "Rs. ${getCurrentMonthTotalExpenses(_expenses).toString()}",
+                "Rs. ${getCurrentMonthTotalExpenses(_expenseController.expenses).toString()}",
                 style: TextStyle(
                     color: Colors.white,
                     fontSize: 14.0,
@@ -117,13 +95,15 @@ class _ExpenseListState extends State<ExpenseList> {
           ),
           Expanded(
             child: ListView.builder(
-              itemCount: _expenses.length,
+              itemCount: _expenseController.expenses.length,
               itemBuilder: (BuildContext context, int index) {
-                Expense item = _expenses[index];
+                Expense expense = _expenseController.expenses[index];
                 return ListTile(
-                  onTap: () => {onExpenseItemTapped(item)},
+                  onTap: () => {onExpenseItemTapped(expense)},
                   trailing: GestureDetector(
-                    onTap: () => deleteExpense(item, repository),
+                    onTap: () {
+                      _expenseController.deleteExpense(expense);
+                    },
                     child: Icon(
                       Icons.delete_forever_rounded,
                       color: Colors.red,
@@ -135,22 +115,22 @@ class _ExpenseListState extends State<ExpenseList> {
                   title: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      categoryLabelWidget(item),
+                      categoryLabelWidget(expense),
                       Text(
-                        item.description,
+                        expense.description,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(fontSize: 16.0),
                       ),
                       Text(
-                        'Rs. ${item.amount}',
+                        'Rs. ${expense.amount}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                             fontSize: 14.0, fontWeight: FontWeight.w700),
                       ),
                       Text(
-                        getCreatedAt(item.createdAt),
+                        getCreatedAt(expense.createdAt),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -165,11 +145,6 @@ class _ExpenseListState extends State<ExpenseList> {
         ],
       );
     }
-  }
-
-  deleteExpense(Expense expense, ExpenseRepository repository) {
-    repository.deleteExpense(expense.id);
-    getAllExpenses();
   }
 
   double getCurrentMonthTotalExpenses(List<Expense> expenses) {
@@ -206,32 +181,28 @@ class _ExpenseListState extends State<ExpenseList> {
   getCreatedAt(String createdAt) => Utils.formatDate(createdAt, "dd, MMM yyyy");
 
   onExpenseItemTapped(Expense expense) {
-    showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text('Hello!'),
-            content: Text(
-                'You have spent Rs.${expense.amount} on ${getCreatedAt(expense.createdAt)} for ${expense.categoryName}'),
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: Text(
-                    'OK',
-                    style: TextStyle(color: Colors.red),
-                  ))
-            ],
-            actionsPadding: EdgeInsets.all(10.0),
-            elevation: 12.0,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.0)),
-          );
-        });
+    Get.defaultDialog(
+        title: 'Hello!',
+        content: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(
+            'You have spent Rs.${expense.amount}\non ${getCreatedAt(expense.createdAt)} for ${expense.categoryName}',
+            textAlign: TextAlign.center,
+            maxLines: 5,
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Get.back(),
+              child: Text(
+                'OK',
+                style: TextStyle(color: Colors.red),
+              ))
+        ],
+        radius: 10.0);
   }
 
-  Future<bool> isMonthlyExpenseLimitExceeded() async {
+  Future<bool> isMonthlyExpenseLimitExceeded(List<Expense> expenses) async {
     Future<SharedPreferences> prefs = SharedPreferences.getInstance();
     SharedPreferences sharedPrefs = await prefs;
     var monthlyExpenseLimit = sharedPrefs.getDouble(MONTHLY_EXPENSE_LIMIT_KEY);
